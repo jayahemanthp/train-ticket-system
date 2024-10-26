@@ -2,35 +2,38 @@
 #Use db to store train details
 #retrieve data, modify data, display data
 
-#Damn gonna be harder than expected
 
 import mysql.connector
-import csv
 
 mydb = mysql.connector.connect(
     host="localhost",
-    user="root",
-    password="your_password",
-    database="your_database"
+    user="admin",
+    password="admin@123"
 )
 mycursor = mydb.cursor()
+try:
+    mycursor.execute("CREATE DATABASE ticket_system")
+except:
+    pass
+mycursor.execute("USE ticket_system")
+
 mycursor.execute("SHOW TABLES LIKE 'users'")
 result = mycursor.fetchone()
-if result:
-    print("Table 'users' already exists.")
-else:
+if not result:
     mycursor.execute("""
         CREATE TABLE users (
-            username VARCHAR(255) NOT NULL UNIQUE,
+            username VARCHAR(255),
             password VARCHAR(255) NOT NULL,
+            PRIMARY KEY (username)
         )
     """)
     mydb.commit()
     print("Table 'users' created successfully.")
 
+import dashboard
+
 def user_login(username, password):
     try:
-        
         sql = "SELECT * FROM users WHERE username = %s AND password = %s"
         val = (username, password)
         mycursor.execute(sql, val)
@@ -42,53 +45,35 @@ def user_login(username, password):
             print("Login failed. Invalid username or password.")
             return False
     except mysql.connector.Error as error:
-        print("Error connecting to MySQL database:", error)
+        print("MySQL Error:", error)
         return False
-    finally:
-        if mydb:
-            mycursor.close()
-            mydb.close()
 
 def register_user(username, password):
     try:
-        mydb = mysql.connector.connect(
-            host="localhost",
-            user="your_username",
-            password="your_password",
-            database="your_database"
-        )
-        mycursor = mydb.cursor()
         sql = "INSERT INTO users (username, password) VALUES (%s, %s)"
         val = (username, password)
         mycursor.execute(sql, val)
         mydb.commit()
         print("Registration successful!")
     except mysql.connector.Error as error:
-        print("Error connecting to MySQL database:", error)
-    finally:
-        if mydb:
-            mycursor.close()
-            mydb.close()
-
-def save_to_csv(data):
-    with open('data.csv', 'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(data)
+        print("MySQL Error:", error)
 
 def main():
     while True:
+        print()
         print("1. Login")
         print("2. Register")
         print("3. Exit")
+        print()
         choice = input("Enter your choice: ")
+        print()
 
         if choice == "1":
             username = input("Enter your username: ")
             password = input("Enter your password: ")
             if user_login(username, password):
-                data = [username, password]
-                save_to_csv(data)
-                print("Data saved to CSV file.")
+                dashboard.options(username)
+                break
         elif choice == "2":
             username = input("Enter a username: ")
             password = input("Enter a password: ")
@@ -98,6 +83,4 @@ def main():
         else:
             print("Invalid choice. Please try again")
 
-if __name__ == "__main__":
-    main()
-
+main()
